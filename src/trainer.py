@@ -70,6 +70,7 @@ from transformers.trainer_utils import (
 from transformers.training_args import TrainingArguments
 from transformers.utils import logging
 from tqdm import tqdm, trange
+import pickle as pkl
 
 _use_native_amp = False
 _use_apex = False
@@ -223,6 +224,7 @@ class SuperGenTrainer(transformers.Trainer):
             predictions = output.predictions
             pred_probs = softmax(predictions, axis=-1)
             # Update ensemble predictions (Temporal ensemble)
+            raw_preds = softmax(predictions, axis=-1)
             self.train_dataset.ensemble_count += 1
             self.train_dataset.ensemble_pred = (1-momentum)*pred_probs + momentum*self.train_dataset.ensemble_pred
             self.train_dataset.ensemble_pred = self.train_dataset.ensemble_pred
@@ -232,6 +234,15 @@ class SuperGenTrainer(transformers.Trainer):
             predictions = np.argmax(pred_probs, axis=-1)
             labels = np.array([feature.label for feature in self.train_dataset.features])
             select_pos = (labels == predictions) & (max_probs > threshold)
+            meta_dict = {
+                "raw_preds": raw_preds,
+                "labels": labels,
+                "z": pred_probs,
+                "select_pos": select_pos,
+            }
+            with open(f"meta_vals_{self.epoch}.pkl", "wb") as f:
+                pkl.dump(meta_dict, f)
+
             for i in range(self.train_dataset.num_labels):
                 num_train = np.sum((labels == i) & select_pos)
                 # If there are too few valid training data for some class, use half of the entire training data sorted by confidence
@@ -503,6 +514,7 @@ class SuperGenTrainer(transformers.Trainer):
 
         if log:
             self.log(output.metrics)
+            print(output.metrics)
 
         if self.args.tpu_metrics_debug or self.args.debug:
             # tpu-comment: Logging debug metrics for PyTorch/XLA (compile, execute times, ops, etc.)
