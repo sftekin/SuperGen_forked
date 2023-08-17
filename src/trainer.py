@@ -369,7 +369,7 @@ class SuperGenTrainer(transformers.Trainer):
             self.reset_train_data()
             if epoch > 0:
                 print(f"Evaluating on training set for temporal ensembling")
-                output = self.evaluate(eval_dataset=self.train_dataset, log=False)
+                output = self.evaluate(eval_dataset=self.train_dataset, log=True)
             else:
                 output = None
             self.update_train_data(output, threshold=self.args.threshold, momentum=self.args.momentum)
