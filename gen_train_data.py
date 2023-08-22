@@ -515,12 +515,12 @@ class SuperGenGenerator():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pretrain_corpus_dir', default=None,)
+    parser.add_argument('--pretrain_corpus_dir', default="pretrain_corpus/wiki_long.txt",)
     parser.add_argument('--task', default='mnli',)
     parser.add_argument('--label', default='entailment',)
     parser.add_argument('--model_type', default='ctrl',)
     parser.add_argument('--model_name_or_path', default='ctrl',)
-    parser.add_argument('--temperature', default='0.2')
+    parser.add_argument('--temperature', default='0')
     parser.add_argument('--repetition_reward', default=None, type=float)
     parser.add_argument('--repetition_penalty', default=None, type=float)
     parser.add_argument('--p', default=1.0, type=float)
@@ -536,7 +536,8 @@ def main():
     print(args)
     args.task = args.task.lower()
     args.temperature = eval(args.temperature)
-    args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+    # args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+    args.device = "cpu"
     args.n_gpu = 0 if args.no_cuda else torch.cuda.device_count()
 
     logger.warning(f"device: {args.device}, n_gpu: {args.n_gpu}, 16-bits training: {args.fp16}")
